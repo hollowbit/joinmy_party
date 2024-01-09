@@ -66,31 +66,16 @@ defmodule JoinmyPartyWeb.PdilemmaLive do
     {:noreply, socket}
   end
 
-  def handle_info({:round_timer, time}, socket) do
-    {:noreply, assign(socket, :round_time, time)}
-  end
+  def handle_info({:round_timer, time}, socket), do: {:noreply, assign(socket, :round_time, time)}
 
-  def handle_info({:round_end, round_results}, socket) do
-    {:noreply, assign(socket, :round, round_results.next_round)}
-  end
+  def handle_info({:round_end, round_results}, socket), do: {:noreply, assign(socket, :round, round_results.next_round)}
 
-  def handle_info({:team_a_selection_change, selection}, socket) when socket.assigns.team == :team_a do
+  def handle_info({:team_a_selection_change, selection}, socket) when socket.assigns.team == :team_a, do:
     {:noreply, assign(socket, :selection, selection)}
-  end
+  def handle_info({:team_a_selection_change, _}, socket), do: {:noreply, socket}
 
-  def handle_info({:team_a_selection_change, _}, socket) do
-    {:noreply, socket}
-  end
-
-  def handle_info({:team_b_selection_change, selection}, socket) when socket.assigns.team == :team_b do
+  def handle_info({:team_b_selection_change, selection}, socket) when socket.assigns.team == :team_b, do:
     {:noreply, assign(socket, :selection, selection)}
-  end
-
-  def handle_info({:team_b_selection_change, _}, socket) do
-    {:noreply, socket}
-  end
-
-
-
+  def handle_info({:team_b_selection_change, _}, socket), do: {:noreply, socket}
 
 end

@@ -144,36 +144,24 @@ defmodule PdilemmaGame do
     game_pid
   end
 
-  def team_a_toggle_selection(pid) do
-    GenServer.cast(pid, :team_a_toggle_selection)
-  end
+  def team_a_toggle_selection(pid), do: GenServer.cast(pid, :team_a_toggle_selection)
+  def team_b_toggle_selection(pid), do: GenServer.cast(pid, :team_b_toggle_selection)
 
-  def team_b_toggle_selection(pid) do
-    GenServer.cast(pid, :team_b_toggle_selection)
-  end
+  def pick_team(pid), do: GenServer.call(pid, :pick_team)
 
-  def pick_team(pid) do
-    GenServer.call(pid, :pick_team)
-  end
-
-  defp broadcast_round_timer(room_id, timer_sec) do
+  defp broadcast_round_timer(room_id, timer_sec), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:round_timer, timer_sec})
-  end
 
-  defp broadcast_round_end(rood_id, round_end_results) do
+  defp broadcast_round_end(rood_id, round_end_results), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> rood_id, {:round_end, round_end_results})
-  end
 
-  defp broadcast_team_a_selection_change(room_id, selection) do
+  defp broadcast_team_a_selection_change(room_id, selection), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:team_a_selection_change, selection})
-  end
 
-  defp broadcast_team_b_selection_change(room_id, selection) do
+  defp broadcast_team_b_selection_change(room_id, selection), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:team_b_selection_change, selection})
-  end
 
-  defp broadcast_game_end(room_id, game_end_results) do
+  defp broadcast_game_end(room_id, game_end_results), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:game_end, game_end_results})
-  end
 
 end
