@@ -6,7 +6,11 @@ defmodule JoinmyPartyWeb.PdilemmaLive do
 
   def render(assigns) do
     ~H"""
-    <%= if @started do %>
+    <%= case @phase do %>
+    <% :connecting -> %>
+      <h1>Connecting...</h1>
+    <% :playing -> %>
+
       <button phx-click="change_selection">
         <%= case @selection do
           :defect -> "Defect"
@@ -19,8 +23,12 @@ defmodule JoinmyPartyWeb.PdilemmaLive do
       <h3>Round: <%= @round %></h3>
       <h3>Team: <%= @team %></h3>
       <h3>Round Time: <%= @round_time %></h3>
-    <% else %>
-      <h1>Connecting...</h1>
+
+    <% :end -> %>
+      <h1>Game Over</h1>
+      <h3>Winner: <%= @winner %></h3>
+      <h3>Team A Score: <%= @team_a_score %></h3> <h3>Team B Score: <%= @team_b_score %></h3>
+
     <% end %>
     """
   end
@@ -29,7 +37,7 @@ defmodule JoinmyPartyWeb.PdilemmaLive do
     if connected?(socket) do
       connected_mount(params, session, socket)
     else
-      {:ok, assign(socket, :started, false)}
+      {:ok, assign(socket, :phase, :connecting)}
     end
   end
 
@@ -40,7 +48,7 @@ defmodule JoinmyPartyWeb.PdilemmaLive do
 
     game_info = PdilemmaGame.pick_team(game_pid)
     state = %{
-      started: true,
+      phase: :playing,
       game_pid: game_pid,
       room_id: room_id,
       team: game_info.team,
@@ -69,6 +77,16 @@ defmodule JoinmyPartyWeb.PdilemmaLive do
   def handle_info({:round_timer, time}, socket), do: {:noreply, assign(socket, :round_time, time)}
 
   def handle_info({:round_end, round_results}, socket), do: {:noreply, assign(socket, :round, round_results.next_round)}
+
+  def handle_info({:game_end, game_results}, socket) do
+    new_state = %{
+      phase: :end,
+      team_a_score: game_results.team_a_score + game_results.team_a_points_earned,
+      team_b_score: game_results.team_b_score + game_results.team_b_points_earned,
+      winner: game_results.winner
+    }
+    {:noreply, assign(socket, new_state)}
+  end
 
   def handle_info({:team_a_selection_change, selection}, socket) when socket.assigns.team == :team_a, do:
     {:noreply, assign(socket, :selection, selection)}

@@ -70,8 +70,14 @@ defmodule PdilemmaGame do
     team_a_points_earned = PdilemmaLogic.calculate_score(state.team_a_selection, state.team_b_selection)
     team_b_points_earned = PdilemmaLogic.calculate_score(state.team_b_selection, state.team_a_selection)
 
+    team_a_final_score = state.team_a_score + team_a_points_earned
+    team_b_final_score = state.team_b_score + team_b_points_earned
+
+    winner = PdilemmaLogic.get_winner(team_a_final_score, team_b_final_score)
+
     # create results to broadcast back to players
     game_end_results = %{
+      winner: winner,
       team_a_score: state.team_a_score,
       team_b_score: state.team_b_score,
       team_a_selection: state.team_a_selection,
@@ -84,8 +90,8 @@ defmodule PdilemmaGame do
     :global.unregister_name(state.room_id)
 
     new_state = Map.merge(state, %{
-      team_a_score: state.team_a_score + team_a_points_earned,
-      team_b_score: state.team_b_score + team_b_points_earned
+      team_a_score: team_a_final_score,
+      team_b_score: team_b_final_score
     })
     {:stop, :normal, new_state}
   end
