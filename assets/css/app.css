@@ -121,3 +121,7 @@
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+.v-card {
+  @apply m-5 p-3 shadow-slate-400 shadow-lg;
+}

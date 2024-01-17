@@ -51,6 +51,16 @@ defmodule JoinmyPartyWeb do
     end
   end
 
+  # Game Views
+  def pdilemma_view do
+    quote do
+      use Phoenix.LiveView,
+        layout: {JoinmyPartyWeb.LayoutView, "pdilemma.html"}
+
+      unquote(view_helpers())
+    end
+  end
+
   def live_component do
     quote do
       use Phoenix.LiveComponent

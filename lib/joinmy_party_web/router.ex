@@ -20,7 +20,7 @@ defmodule JoinmyPartyWeb.Router do
     get "/", PageController, :index
 
     live "/thermostat", ThermostatLive, :index
-    live "/pdilemma/:room_id", PdilemmaLive, :index
+    live "/pdilemma/:room_id", PdilemmaWebLive, :index
   end
 
   # Other scopes may use custom stacks.

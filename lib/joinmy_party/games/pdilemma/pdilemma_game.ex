@@ -1,21 +1,20 @@
 defmodule PdilemmaGame do
   use GenServer
 
-  @round_time_sec 300
-  @num_rounds 6
-
   @impl true
-  def init(room_id) do
+  def init(%{room_id: room_id, round_time_sec: round_time_sec, num_rounds: num_rounds}) do
     init_state = %{
       room_id: room_id,
+      settings: %{round_time_sec: round_time_sec, num_rounds: num_rounds},
       round: 1,
       team_a_selection: :cooperate,
       team_b_selection: :cooperate,
       team_a_score: 0,
       team_b_score: 0,
+      tally: [],
       team_a_num_players: 0,
       team_b_num_players: 0,
-      round_timer: JoinmyParty.Timer.set_timer(@round_time_sec, self())
+      round_timer: JoinmyParty.Timer.set_timer(round_time_sec, self())
     }
 
     {:ok, init_state}
@@ -45,6 +44,7 @@ defmodule PdilemmaGame do
       team: :team_b,
       selection: state.team_b_selection,
       score: state.team_b_score,
+      tally: state.tally,
       round: state.round,
       round_time: state.round_timer.time_left_sec
     }
@@ -57,6 +57,7 @@ defmodule PdilemmaGame do
       team: :team_a,
       selection: state.team_a_selection,
       score: state.team_a_score,
+      tally: state.tally,
       round: state.round,
       round_time: state.round_timer.time_left_sec
     }
@@ -65,7 +66,7 @@ defmodule PdilemmaGame do
 
   # game end
   @impl true
-  def handle_info({:update_time, 0}, state = %{round: @num_rounds}) do
+  def handle_info({:update_time, 0}, state) when state.round == state.settings.num_rounds do
     # get scores
     team_a_points_earned = PdilemmaLogic.calculate_score(state.team_a_selection, state.team_b_selection)
     team_b_points_earned = PdilemmaLogic.calculate_score(state.team_b_selection, state.team_a_selection)
@@ -103,6 +104,11 @@ defmodule PdilemmaGame do
     team_a_points_earned = PdilemmaLogic.calculate_score(state.team_a_selection, state.team_b_selection)
     team_b_points_earned = PdilemmaLogic.calculate_score(state.team_b_selection, state.team_a_selection)
 
+    tally = state.tally ++ [[
+      state.team_a_score + team_a_points_earned,
+      state.team_b_score + team_b_points_earned
+      ]]
+
     # create results to broadcast back to players
     round_end_results = %{
       team_a_score: state.team_a_score,
@@ -113,8 +119,10 @@ defmodule PdilemmaGame do
       team_b_points_earned: team_b_points_earned,
       round: state.round,
       next_round: state.round + 1,
+      tally: tally
     }
     broadcast_round_end(state.room_id, round_end_results)
+    broadcast_round_timer(state.room_id, state.settings.round_time_sec)
 
     new_state = Map.merge(state, %{
       round: state.round + 1,
@@ -122,7 +130,8 @@ defmodule PdilemmaGame do
       team_b_selection: :cooperate,
       team_a_score: state.team_a_score + team_a_points_earned,
       team_b_score: state.team_b_score + team_b_points_earned,
-      round_timer: JoinmyParty.Timer.set_timer(@round_time_sec, self())
+      round_timer: JoinmyParty.Timer.set_timer(state.settings.round_time_sec, self()),
+      tally: tally
     })
     {:noreply, new_state}
   end
@@ -138,10 +147,10 @@ defmodule PdilemmaGame do
 
   # Helper Functions
 
-  def get_room_pid(room_id) do
+  def get_room_pid_or_start(room_id, settings) do
     game_pid = case :global.whereis_name(room_id) do
       :undefined ->
-        {:ok, pid} = GenServer.start_link(__MODULE__, room_id)
+        {:ok, pid} = GenServer.start_link(__MODULE__, Map.merge(%{room_id: room_id}, settings))
         :global.register_name(room_id, pid)
         pid
       pid -> pid
