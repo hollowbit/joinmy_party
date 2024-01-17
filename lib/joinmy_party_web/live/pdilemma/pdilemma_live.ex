@@ -133,7 +133,10 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
 
   def handle_info({:team_a_selection_change, selection}, socket) when socket.assigns.team == :team_a, do:
     {:noreply, assign(socket, :selection, selection)}
+  def handle_info({:team_a_selection_change, _}, socket), do: {:noreply, socket}
+
   def handle_info({:team_b_selection_change, selection}, socket) when socket.assigns.team == :team_b, do:
     {:noreply, assign(socket, :selection, selection)}
+  def handle_info({:team_b_selection_change, _}, socket), do: {:noreply, socket}
 
 end
