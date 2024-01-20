@@ -95,6 +95,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
     }
 
     Phoenix.PubSub.subscribe(JoinmyParty.PubSub, @topic <> ":" <> room_id)
+    Phoenix.PubSub.subscribe(JoinmyParty.PubSub, @topic <> ":" <> room_id <> ":" <> Atom.to_string(state.team))
 
     {:ok, assign(socket, state)}
   end
@@ -131,12 +132,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
     {:noreply, assign(socket, new_state)}
   end
 
-  def handle_info({:team_a_selection_change, selection}, socket) when socket.assigns.team == :team_a, do:
+  def handle_info({:team_selection_change, selection}, socket), do:
     {:noreply, assign(socket, :selection, selection)}
-  def handle_info({:team_a_selection_change, _}, socket), do: {:noreply, socket}
-
-  def handle_info({:team_b_selection_change, selection}, socket) when socket.assigns.team == :team_b, do:
-    {:noreply, assign(socket, :selection, selection)}
-  def handle_info({:team_b_selection_change, _}, socket), do: {:noreply, socket}
 
 end

@@ -171,10 +171,10 @@ defmodule PdilemmaGame do
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> rood_id, {:round_end, round_end_results})
 
   defp broadcast_team_a_selection_change(room_id, selection), do:
-    Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:team_a_selection_change, selection})
+    Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id <> ":team_a", {:team_selection_change, selection})
 
   defp broadcast_team_b_selection_change(room_id, selection), do:
-    Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:team_b_selection_change, selection})
+    Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id <> ":team_b", {:team_selection_change, selection})
 
   defp broadcast_game_end(room_id, game_end_results), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:game_end, game_end_results})
