@@ -10,6 +10,26 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
     """
   end
 
+  def render(assigns = %{phase: :lobbying, is_admin?: true}) do
+    ~H"""
+      <button phx-click="start_game">Start Game</button>
+      <p>You are on team <%= team_text(@team) %></p>
+    """
+  end
+
+  def render(assigns = %{phase: :lobbying, is_admin?: false}) do
+    ~H"""
+      <h1>Waiting for the game to start...</h1>
+      <p>You are on team <%= team_text(@team) %></p>
+    """
+  end
+
+  def render(assigns = %{phase: :lobbying}) do
+    ~H"""
+      <h1>Waiting for the game to start...</h1>
+    """
+  end
+
   def render(assigns = %{phase: :playing}) do
     ~H"""
       <header class="v-card">
@@ -37,19 +57,19 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
           <tbody>
             <tr>
               <td class={"px-2"  <> if @team == :team_a, do: " italic", else: ""}>Team A : </td>
-              <%= for [team_a_score, _] <- @tally do %>
+              <%= for [team_a_score, _] <- Enum.reverse(@tally) do %>
                 <td class={"border-r-2 border-gray-400 px-2" <> if @team == :team_a, do: " italic", else: ""}><%= team_a_score %></td>
               <% end %>
             </tr>
             <tr>
               <td class={"px-2" <> if @team == :team_b, do: " italic", else: ""}>Team B : </td>
-              <%= for [_, team_b_score] <- @tally do %>
+              <%= for [_, team_b_score] <- Enum.reverse(@tally) do %>
                 <td class={"border-r-2 border-gray-400 px-2" <> if @team == :team_b, do: " italic", else: ""}><%= team_b_score %></td>
               <% end %>
             </tr>
           </tbody>
         </table>
-        <p>You are on <%= team_text(@team) %>.</p>
+        <p>You are on <span class="underline"><%= team_text(@team) %></span>.</p>
       </div>
     """
   end
@@ -83,15 +103,15 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
 
     game_info = PdilemmaGame.pick_team(game_pid)
     state = %{
-      phase: :playing,
+      is_admin?: game_info.is_admin?,
+      phase: game_info.started && :playing || :lobbying,
       game_pid: game_pid,
       room_id: room_id,
       team: game_info.team,
       selection: game_info.selection,
-      score: game_info.score,
-      round_time: game_info.round_time,
       round: game_info.round,
-      tally: game_info.tally
+      tally: game_info.tally,
+      round_time: game_info.round_time
     }
 
     Phoenix.PubSub.subscribe(JoinmyParty.PubSub, @topic <> ":" <> room_id)
@@ -101,11 +121,21 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
   end
 
   def handle_event("change_selection", _params, socket = %{assigns: %{team: team, game_pid: game_pid}}) do
-    case team do
-      :team_a -> PdilemmaGame.team_a_toggle_selection(game_pid)
-      :team_b -> PdilemmaGame.team_b_toggle_selection(game_pid)
-    end
+    PdilemmaGame.team_toggle_selection(team, game_pid)
     {:noreply, socket}
+  end
+
+  def handle_event("start_game", _params, socket = %{assigns: %{game_pid: game_pid}}) do
+    PdilemmaGame.start_game(game_pid)
+    {:noreply, socket}
+  end
+
+  def handle_info({:game_start, time}, socket) do
+    new_state = %{
+      phase: :playing,
+      round_time: time
+    }
+    {:noreply, assign(socket, new_state)}
   end
 
   def handle_info({:round_timer, time}, socket), do: {:noreply, assign(socket, :round_time, time)}
@@ -113,10 +143,6 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
   def handle_info({:round_end, round_results}, socket) do
     new_state = %{
       round: round_results.next_round,
-      score: case socket.assigns.team do
-          :team_a -> round_results.team_a_score + round_results.team_a_points_earned
-          :team_b -> round_results.team_b_score + round_results.team_b_points_earned
-        end,
       tally: round_results.tally
     }
     {:noreply, assign(socket, new_state)}
