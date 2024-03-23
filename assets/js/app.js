@@ -42,3 +42,10 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+window.addEventListener("phx:show-modal", ({detail}) => {
+    console.log("testerino " + detail.to);
+    document.getElementById(detail.to).showModal()
+});
+
+
+

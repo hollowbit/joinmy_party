@@ -4,10 +4,6 @@
 
 /* This file is for your main application CSS */
 
-body {
-    @apply font-mono;
-}
-
 /* Alerts and form errors used by phx.new */
 .alert {
   padding: 15px;

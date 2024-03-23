@@ -41,7 +41,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
       <header class="v-card">
         <h1 class="text-center text-xl">Round <%= @round %> of <%= @total_rounds %></h1>
 
-        <h3 class="text-center">Round ends in <span class={if @round_time < 10, do: "text-red-500"}><%= @round_time %>s</span></h3>
+        <h3 class="text-center">Round ends in <span class={if @round_time < 10, do: "text-red-500"}><%= seconds_to_time(@round_time) %></span></h3>
       </header>
 
       <div class="flex flex-wrap">
@@ -62,13 +62,13 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
           </thead>
           <tbody>
             <tr id="tally-team-a" phx-update="append">
-              <td class={"px-2"  <> if @team == :team_a, do: " italic", else: ""} id="round-team-a">Team A : </td>
+              <td class={"px-2"  <> if @team == :team_a, do: " italic", else: ""} id="round-team-a">Team A</td>
               <%= for {[team_a_score, _], round} <- Enum.reverse(@tally) |> Enum.with_index do %>
                 <td class={"border-r-2 border-gray-400 px-2" <> if @team == :team_a, do: " italic", else: ""} id={"team-a-#{round}"}><%= team_a_score %></td>
               <% end %>
             </tr>
             <tr id="tally-team-b" phx-update="append">
-              <td class={"px-2" <> if @team == :team_b, do: " italic", else: ""} id="round-team-b">Team B : </td>
+              <td class={"px-2" <> if @team == :team_b, do: " italic", else: ""} id="round-team-b">Team B</td>
               <%= for {[_, team_b_score], round} <- Enum.reverse(@tally) |> Enum.with_index do %>
                 <td class={"border-r-2 border-gray-400 px-2" <> if @team == :team_b, do: " italic", else: ""} id={"team-b-#{round}"}><%= team_b_score %></td>
               <% end %>
@@ -113,6 +113,16 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
   defp team_text(:team_b), do: "Team B"
   defp team_text(:tie), do: "Tie"
 
+  defp seconds_to_time(seconds) do
+    minutes = div(seconds, 60)
+    remaining_seconds = rem(seconds, 60)
+
+    case minutes do
+      0 -> "#{remaining_seconds}s"
+      _ -> "#{minutes}:#{String.pad_leading(Integer.to_string(remaining_seconds), 2, "0")}s"
+    end
+  end
+
   # Logic
 
   def mount(params, session, socket) do
@@ -125,7 +135,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
 
   defp connected_mount(%{"room_id" => room_id}, _session, socket) do
     num_rounds = 6
-    game_pid = PdilemmaGame.get_room_pid_or_start(room_id, %{num_rounds: num_rounds, round_time_sec: 5 * 60})
+    game_pid = PdilemmaGame.get_room_pid_or_start(room_id, %{num_rounds: num_rounds, round_time_sec: 4 * 6})
 
     game_info = PdilemmaGame.pick_team(game_pid)
     state = %{
@@ -175,7 +185,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
       round: round_results.next_round,
       tally: round_results.tally
     }
-    {:noreply, assign(socket, new_state)}
+    {:noreply, assign(socket |> push_event("show-modal", %{to: "pdilemma-round-end-modal"}), new_state)}
   end
 
   def handle_info({:game_end, game_results}, socket) do

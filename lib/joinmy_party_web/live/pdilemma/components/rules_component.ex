@@ -4,7 +4,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebRules do
 
   def index(assigns) do
     ~H"""
-      <dialog id="pdilemma-rules-modal" class="w-10/12 max-w-2xl min-h-96 p-4 rounded-md shadow-md shadow-slate-800 text-slate-800" onclick="document.getElementById('pdilemma-rules-modal').close();">
+      <dialog id="pdilemma-rules-modal" class="w-10/12 max-w-2xl min-h-96 p-4 rounded-md shadow-md shadow-slate-800 text-slate-800" phx-update="ignore" onclick="document.getElementById('pdilemma-rules-modal').close();">
         <span class="top-2 float-right mr-2 font-bold text-3xl text-slate-700 cursor-pointer" >✖</span>
         <h1 class="text-center text-2xl m-3 font-bold underline">RULES for The Prisoner's Dilemma</h1>
         <p class="text-slate-600 text-sm">Game Time: 30min</p>
