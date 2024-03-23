@@ -10,9 +10,11 @@
   <div class="flex justify-center flex-col w-screen px-4 max-w-3xl mx-auto">
     <%= @inner_content %>
     
+    <%= JoinmyPartyWeb.PdilemmaWebRules.index %{} %>
+
     <footer>
       <small class="text-small">
-        You are playing Prisoner's Dilemma. <a>Rules</a>
+        You are playing Prisoner's Dilemma. <a class="cursor-pointer" onclick={JoinmyPartyWeb.PdilemmaWebRules.onclick}>Rules 🛈</a>
       </small>
     </footer>
   </div>

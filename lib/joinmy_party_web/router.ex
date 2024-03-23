@@ -17,10 +17,9 @@ defmodule JoinmyPartyWeb.Router do
   scope "/", JoinmyPartyWeb do
     pipe_through :browser
 
-    get "/", PageController, :index
+    live "/", IndexWebLive, :index
 
-    live "/thermostat", ThermostatLive, :index
-    live "/pdilemma/:room_id", PdilemmaWebLive, :index
+    live "/:room_id", PdilemmaWebLive, :index
   end
 
   # Other scopes may use custom stacks.

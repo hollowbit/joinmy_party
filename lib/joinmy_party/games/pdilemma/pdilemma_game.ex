@@ -45,6 +45,7 @@ defmodule PdilemmaGame do
 
   @impl true
   def handle_call(:pick_team, _from, state = %{team_a_num_players: players}) when state.team_a_num_players <= state.team_b_num_players do
+    total_players = state.team_a_num_players + state.team_b_num_players + 1
     team_info = %{
       # set first player to admin
       is_admin?: state.team_a_num_players == 0 && state.team_b_num_players == 0,
@@ -53,13 +54,17 @@ defmodule PdilemmaGame do
       selection: state.team_a_selection,
       tally: state.tally,
       round: state.round,
-      round_time: state.round_timer.time_left_sec
+      round_time: state.round_timer.time_left_sec,
+      total_players: total_players
     }
+
+    broadcast_players_joined(state.room_id, total_players)
     {:reply, team_info, Map.put(state, :team_a_num_players, players + 1)}
   end
 
   @impl true
   def handle_call(:pick_team, _from, state = %{team_a_num_players: players}) when state.team_a_num_players > state.team_b_num_players do
+    total_players = state.team_a_num_players + state.team_b_num_players + 1
     team_info = %{
       is_admin?: false,
       team: :team_b,
@@ -67,8 +72,11 @@ defmodule PdilemmaGame do
       selection: state.team_b_selection,
       tally: state.tally,
       round: state.round,
-      round_time: state.round_timer.time_left_sec
+      round_time: state.round_timer.time_left_sec,
+      total_players: total_players
     }
+
+    broadcast_players_joined(state.room_id, total_players)
     {:reply, team_info, Map.put(state, :team_b_num_players, players + 1)}
   end
 
@@ -185,6 +193,9 @@ defmodule PdilemmaGame do
 
   defp broadcast_game_start(room_id, timer_sec), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:game_start, timer_sec})
+
+  defp broadcast_players_joined(room_id, players), do:
+    Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:players_joined, players})
 
   defp broadcast_round_timer(room_id, timer_sec), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:round_timer, timer_sec})
