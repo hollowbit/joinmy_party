@@ -17,6 +17,8 @@ defmodule JoinmyPartyWeb do
   and import those modules here.
   """
 
+  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+
   def controller do
     quote do
       use Phoenix.Controller, namespace: JoinmyPartyWeb
@@ -24,6 +26,8 @@ defmodule JoinmyPartyWeb do
       import Plug.Conn
       import JoinmyPartyWeb.Gettext
       alias JoinmyPartyWeb.Router.Helpers, as: Routes
+
+      unquote(verified_routes())
     end
   end
 
@@ -45,7 +49,7 @@ defmodule JoinmyPartyWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {JoinmyPartyWeb.LayoutView, "live.html"}
+        layout: {JoinmyPartyWeb.LayoutView, :live}
 
       unquote(view_helpers())
     end
@@ -55,7 +59,7 @@ defmodule JoinmyPartyWeb do
   def pdilemma_view do
     quote do
       use Phoenix.LiveView,
-        layout: {JoinmyPartyWeb.LayoutView, "pdilemma.html"}
+        layout: {JoinmyPartyWeb.LayoutView, :pdilemma}
 
       unquote(view_helpers())
     end
@@ -108,6 +112,17 @@ defmodule JoinmyPartyWeb do
       import JoinmyPartyWeb.ErrorHelpers
       import JoinmyPartyWeb.Gettext
       alias JoinmyPartyWeb.Router.Helpers, as: Routes
+
+      unquote(verified_routes())
+    end
+  end
+
+  def verified_routes do
+    quote do
+      use Phoenix.VerifiedRoutes,
+      endpoint: JoinmyPartyWeb.Endpoint,
+      router: JoinmyPartyWeb.Router,
+      statics: JoinmyPartyWeb.static_paths()
     end
   end
 

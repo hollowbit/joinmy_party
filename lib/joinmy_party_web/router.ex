@@ -14,26 +14,7 @@ defmodule JoinmyPartyWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", JoinmyPartyWeb do
-    pipe_through :browser
-
-    live "/", IndexWebLive, :index
-
-    live "/:room_id", PdilemmaWebLive, :index
-  end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", JoinmyPartyWeb do
-  #   pipe_through :api
-  # end
-
   # Enables LiveDashboard only for development
-  #
-  # If you want to use the LiveDashboard in production, you should put
-  # it behind authentication and allow only admins to access it.
-  # If your application does not have an admins-only section yet,
-  # you can use Plug.BasicAuth to set up some basic authentication
-  # as long as you are also using SSL (which you should anyway).
   if Mix.env() in [:dev, :test] do
     import Phoenix.LiveDashboard.Router
 
@@ -44,15 +25,23 @@ defmodule JoinmyPartyWeb.Router do
     end
   end
 
-  # Enables the Swoosh mailbox preview in development.
-  #
-  # Note that preview only shows emails that were sent by the same
-  # node running the Phoenix server.
+  # Enables HTML/CSS testing pages for development
   if Mix.env() == :dev do
     scope "/dev" do
       pipe_through :browser
 
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
+      live "/tester", JoinmyPartyWeb.LiveTester
     end
   end
+
+
+  # Game routes go after test & dev routes to avoid overriding them
+  scope "/", JoinmyPartyWeb do
+    pipe_through :browser
+
+    live "/", IndexWebLive, :index
+
+    live "/:room_id", PdilemmaWebLive, :index
+  end
+
 end

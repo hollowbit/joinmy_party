@@ -26,6 +26,8 @@ defmodule JoinmyPartyWeb.ConnCase do
 
       alias JoinmyPartyWeb.Router.Helpers, as: Routes
 
+      use JoinmyPartyWeb, :verified_routes
+
       # The default endpoint for testing
       @endpoint JoinmyPartyWeb.Endpoint
     end

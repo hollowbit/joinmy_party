@@ -1,21 +1,12 @@
-<main>
-  <p class="alert alert-info" role="alert"
-    phx-click="lv:clear-flash"
-    phx-value-key="info"><%= live_flash(@flash, :info) %></p>
-
-  <p class="alert alert-danger" role="alert"
-    phx-click="lv:clear-flash"
-    phx-value-key="error"><%= live_flash(@flash, :error) %></p>
-
-  <div class="flex justify-center flex-col w-screen px-4 max-w-3xl mx-auto">
-    <%= @inner_content %>
+<main class="flex justify-center flex-col w-screen px-4 max-w-3xl mx-auto">
+  <a href="/" class="text-slate-800 underline">Return to JoinMy.Party home</a>
+  <%= @inner_content %>
     
-    <%= JoinmyPartyWeb.PdilemmaWebRules.index %{} %>
+  <%= JoinmyPartyWeb.PdilemmaWebRules.modal %{} %>
 
-    <footer>
-      <small class="text-small">
-        You are playing Prisoner's Dilemma. <a class="cursor-pointer" onclick={JoinmyPartyWeb.PdilemmaWebRules.onclick}>Rules 🛈</a>
-      </small>
-    </footer>
-  </div>
+  <footer>
+    <small class="text-small">
+      You are playing Prisoner's Dilemma. <a class="cursor-pointer" onclick={JoinmyPartyWeb.PdilemmaWebRules.onclick}>Rules 🛈</a>
+    </small>
+  </footer>
 </main>

@@ -1,5 +1,9 @@
 defmodule PdilemmaGame do
-  use GenServer
+  use GenServer, shutdown: 5_000
+
+  def start_link(settings) do
+    GenServer.start_link(__MODULE__, settings, name: {:global, "party:" <> settings.room_id})
+  end
 
   @impl true
   def init(%{room_id: room_id, round_time_sec: round_time_sec, num_rounds: num_rounds}) do
@@ -43,6 +47,38 @@ defmodule PdilemmaGame do
     {:noreply, Map.put(state, :team_b_selection, new_selection)}
   end
 
+  def handle_cast({:player_leave, :team_a}, state = %{team_a_num_players: team_a_num_players}) do
+    players_team = team_a_num_players - 1
+    if players_team < 1 do
+      {:stop, {:shutdown, "Admin player left"}, state}
+    else
+      broadcast_player_count_change(state.room_id, players_team + state.team_b_num_players)
+      {:noreply, Map.put(state, :team_a_num_players, players_team)}
+    end
+  end
+
+  def handle_cast({:player_leave, :team_b}, state = %{team_b_num_players: team_b_num_players}) do
+    players_team = team_b_num_players - 1
+    if players_team < 1 and state.started do
+      {:stop, {:shutdown, "All team B players left"}, state}
+    else
+      broadcast_player_count_change(state.room_id, players_team + state.team_a_num_players)
+      {:noreply, Map.put(state, :team_b_num_players, players_team)}
+    end
+  end
+
+  @impl true
+  def terminate(reason, state) do
+    # if not a :normal exit, close all live sockets with a reason
+    case reason do
+      {:shutdown, message} -> broadcast_party_closed(state.room_id, message)
+      :shutdown -> broadcast_party_closed(state.room_id, "Unknown error")
+      _ -> :ok
+    end
+
+    {:shutdown, reason, state}
+  end
+
   @impl true
   def handle_call(:pick_team, _from, state = %{team_a_num_players: players}) when state.team_a_num_players <= state.team_b_num_players do
     total_players = state.team_a_num_players + state.team_b_num_players + 1
@@ -58,12 +94,12 @@ defmodule PdilemmaGame do
       total_players: total_players
     }
 
-    broadcast_players_joined(state.room_id, total_players)
+    broadcast_player_count_change(state.room_id, total_players)
     {:reply, team_info, Map.put(state, :team_a_num_players, players + 1)}
   end
 
   @impl true
-  def handle_call(:pick_team, _from, state = %{team_a_num_players: players}) when state.team_a_num_players > state.team_b_num_players do
+  def handle_call(:pick_team, _from, state = %{team_b_num_players: players}) when state.team_a_num_players > state.team_b_num_players do
     total_players = state.team_a_num_players + state.team_b_num_players + 1
     team_info = %{
       is_admin?: false,
@@ -76,7 +112,7 @@ defmodule PdilemmaGame do
       total_players: total_players
     }
 
-    broadcast_players_joined(state.room_id, total_players)
+    broadcast_player_count_change(state.room_id, total_players)
     {:reply, team_info, Map.put(state, :team_b_num_players, players + 1)}
   end
 
@@ -170,11 +206,19 @@ defmodule PdilemmaGame do
   # Helper Functions
 
   def get_room_pid_or_start(room_id, settings) do
-    game_pid = case :global.whereis_name(room_id) do
+    game_pid = case :global.whereis_name("party:" <> String.downcase(room_id)) do
       :undefined ->
-        {:ok, pid} = GenServer.start_link(__MODULE__, Map.merge(%{room_id: room_id}, settings))
-        :global.register_name(room_id, pid)
-        pid
+        # use a supervisor to avoid having the admin liveview socket supervise and close the game prematurely
+        children = [
+          %{
+            id: "party:" <> String.downcase(room_id),
+            start: {PdilemmaGame, :start_link, [Map.merge(%{room_id: String.downcase(room_id)}, settings)]},
+          }
+        ]
+        {:ok, pid} = Supervisor.start_link(children, strategy: :one_for_one)
+        [{_id, game_pid, _type, _modules}] = Supervisor.which_children(pid)
+        :global.register_name("party:" <> String.downcase(room_id), game_pid)
+        game_pid
       pid -> pid
     end
 
@@ -189,13 +233,16 @@ defmodule PdilemmaGame do
 
   def pick_team(pid), do: GenServer.call(pid, :pick_team)
 
+  @spec player_leave(:team_a | :team_b, pid()) :: :ok
+  def player_leave(team, pid), do: GenServer.cast(pid, {:player_leave, team})
+
   # Broadcast Helpers
 
   defp broadcast_game_start(room_id, timer_sec), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:game_start, timer_sec})
 
-  defp broadcast_players_joined(room_id, players), do:
-    Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:players_joined, players})
+  defp broadcast_player_count_change(room_id, players), do:
+    Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:player_count_change, players})
 
   defp broadcast_round_timer(room_id, timer_sec), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:round_timer, timer_sec})
@@ -209,5 +256,8 @@ defmodule PdilemmaGame do
 
   defp broadcast_game_end(room_id, game_end_results), do:
     Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:game_end, game_end_results})
+
+  defp broadcast_party_closed(room_id, reason), do:
+    Phoenix.PubSub.broadcast(JoinmyParty.PubSub, "pdilemma:" <> room_id, {:party_closed, reason})
 
 end

@@ -43,9 +43,9 @@ liveSocket.connect()
 window.liveSocket = liveSocket
 
 window.addEventListener("phx:show-modal", ({detail}) => {
-    console.log("testerino " + detail.to);
-    document.getElementById(detail.to).showModal()
-});
+    document.getElementById(detail.to).showModal();
+})
 
-
-
+window.addEventListener("phx:close-modal", ({detail}) => {
+    document.getElementById(detail.to).close();
+})
