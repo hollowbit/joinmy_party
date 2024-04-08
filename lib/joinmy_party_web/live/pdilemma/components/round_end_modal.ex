@@ -1,6 +1,10 @@
 defmodule PdilemmaWeb.RoundEndModal do
+  alias JoinmyPartyWeb.CoreComponents
+  alias Phoenix.LiveView.JS
   # In Phoenix apps, the line is typically: use MyAppWeb, :html
   use Phoenix.LiveComponent
+  import JoinmyPartyWeb.Tools.JsInteropTools
+
 
   def mount(socket) do
     state = %{
@@ -16,13 +20,14 @@ defmodule PdilemmaWeb.RoundEndModal do
 
   def render(assigns) do
     ~H"""
-    <dialog class="w-10/12 max-w-2xl rounded-lg shadow-md shadow-slate-800 text-slate-700 backdrop-blur-2xl" phx-click="close-modal" phx-target={@myself} open={@open} id="pdilemma-round-end-modal">
-        <div class="w-full h-full flex flex-col items-center p-6">
-          <span class="top-2 right-2 mr-2 font-bold text-3xl text-slate-700 cursor-pointer absolute" >✖</span>
+    <div>
+    <JoinmyPartyWeb.CoreComponents.modal id="pdilemma-round-end-modal">
+        <div class="flex flex-col items-center p-6">
           <.round_result_html {assigns} />
-          <button class=" w-3/4 mt-7 rounded-lg bg-emerald-400 text-slate-50 font-bold text-center px-4 py-2 border-emerald-600 border-r-2 border-b-2">Continue to Round <%= @round %></button>
+          <button class=" w-3/4 mt-7 rounded-lg bg-emerald-400 text-slate-50 font-bold text-center px-4 py-2 border-emerald-600 border-r-2 border-b-2" phx-click={JS.exec("data-cancel", to: "#pdilemma-round-end-modal")}>Continue to Round <%= @round %></button>
         </div>
-    </dialog>
+    </JoinmyPartyWeb.CoreComponents.modal>
+    </div>
     """
   end
 
@@ -60,11 +65,11 @@ defmodule PdilemmaWeb.RoundEndModal do
   end
 
   def update(assigns = %{open: true}, socket) do
-    {:ok, push_event_show_modal(assign(socket, assigns))}
+    {:ok, assign(socket, assigns |> Map.delete(:open)) |> show_modal()}
   end
 
   def update(assigns = %{open: false}, socket) do
-    {:ok, push_event_close_modal(assign(socket, assigns))}
+    {:ok, assign(socket, assigns |> Map.delete(:open)) |> hide_modal()}
   end
 
   def update(assigns, socket) do
@@ -72,19 +77,21 @@ defmodule PdilemmaWeb.RoundEndModal do
   end
 
   def handle_event("close-modal", _, socket) do
-    {:noreply, assign(socket, :open, false) |> push_event_close_modal}
+    {:noreply, socket |> hide_modal()}
   end
 
   def handle_event("show-modal", _, socket) do
-    {:noreply, assign(socket, :open, true) |> push_event_show_modal}
+    {:noreply, socket |> show_modal()}
   end
 
-  defp push_event_show_modal(socket) do
-    push_event(socket, "show-modal", %{to: "pdilemma-round-end-modal"})
+  defp show_modal(socket) do
+    socket
+    |> push_js("pdilemma-round-end-modal", CoreComponents.show_modal("pdilemma-round-end-modal"))
   end
 
-  defp push_event_close_modal(socket) do
-    push_event(socket, "close-modal", %{to: "pdilemma-round-end-modal"})
+  defp hide_modal(socket) do
+    socket
+    |> push_js("pdilemma-round-end-modal", CoreComponents.hide_modal("pdilemma-round-end-modal"))
   end
 
 end

@@ -47,7 +47,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
         <h3 class="text-center">Round ends in <span class={if @round_time < 10, do: "text-red-500"}><%= seconds_to_time(@round_time) %></span></h3>
       </header>
 
-      <.live_component module={PdilemmaWeb.RoundEndModal} id="pdilemma-round-end-modal" />
+      <.live_component module={PdilemmaWeb.RoundEndModal} id="round-end-modal" />
 
       <div class="flex flex-wrap">
         <PdilemmaWeb.SelectionComponent.selection_button selection={@selection} />
@@ -139,7 +139,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
 
   defp connected_mount(%{"room_id" => room_id}, _session, socket) do
     num_rounds = 6
-    game_pid = PdilemmaGame.get_room_pid_or_start(room_id, %{num_rounds: num_rounds, round_time_sec: 30})
+    game_pid = PdilemmaGame.get_room_pid_or_start(room_id, %{num_rounds: num_rounds, round_time_sec: 5 * 60})
 
     game_info = PdilemmaGame.pick_team(game_pid)
     state = %{
@@ -208,7 +208,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
     }
 
     round_results = %{
-      id: "pdilemma-round-end-modal",
+      id: "round-end-modal",
       open: true,
       last_round_selection: last_round_selection,
       other_team_selection: other_team_selection,

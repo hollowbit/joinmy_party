@@ -76,6 +76,7 @@ defmodule JoinmyPartyWeb do
   def component do
     quote do
       use Phoenix.Component
+      import JoinmyPartyWeb.CoreComponents
 
       unquote(view_helpers())
     end

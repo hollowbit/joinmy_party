@@ -21,16 +21,16 @@ defmodule JoinmyPartyWeb.LiveTester do
     }
 
     send_update(PdilemmaWeb.RoundEndModal, round_results)
-    {:ok, assign(socket, new_state)}
+    {:ok, assign(socket, new_state) |> push_event("show-modal", %{to: "round-end-modal"})}
   end
 
 
   def render(assigns) do
     ~H"""
 
-    <.live_component module={PdilemmaWeb.RoundEndModal} id="pdilemma-round-end-modal" />
+    <.live_component module={PdilemmaWeb.RoundEndModal} id="round-end-modal" />
 
-    <button phx-click="show-modal" phx-target="#pdilemma-round-end-modal" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Show Modal</button>
+    <button phx-click="show-modal" phx-target="#round-end-modal" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Show Modal</button>
     """
   end
 end
