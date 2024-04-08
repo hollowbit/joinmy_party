@@ -42,10 +42,6 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
-window.addEventListener("phx:show-modal", ({detail}) => {
-    document.getElementById(detail.to).showModal();
-})
-
-window.addEventListener("phx:close-modal", ({detail}) => {
-    document.getElementById(detail.to).close();
-})
+window.addEventListener("phx:exec-js", ({detail}) => {
+    liveSocket.execJS(document.getElementById(detail.to), detail.encodedJS);
+});
