@@ -9,7 +9,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebRules do
         <h1 class="text-center text-2xl m-3 font-bold underline">RULES for The Prisoner's Dilemma</h1>
         <p class="text-slate-600 text-sm">Game Time: 30min</p>
         <p class="text-slate-600 text-sm">Players: 2+</p>
-        <p class="mt-2">Two teams cooperate or compete in a game of friendly negociation, and back-stabbing betrayal.</p>
+        <p class="mt-2">Two teams try to cooperate in a game of friendly negociation, and back-stabbing betrayal.</p>
         <br>
         <p>Games lasts 6 rounds, and on every round each team must choose to either <span class="text-green-500 italic">COOPERATE</span> or <span class="text-red-500 italic">DEFECT</span>. When the 5 minute timer for the round ends, points are given as follows:</p>
         <br>
