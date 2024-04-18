@@ -9,8 +9,7 @@ defmodule JoinmyParty.Application do
   def start(_type, _args) do
     children = [
       # Start the Ecto repository
-      # disabled DB as we aren't using it for now
-      #JoinmyParty.Repo,
+      JoinmyParty.Repo,
       # Start the Telemetry supervisor
       JoinmyPartyWeb.Telemetry,
       # Start the PubSub system

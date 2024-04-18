@@ -7,8 +7,8 @@
 # General application configuration
 import Config
 
-#config :joinmy_party,
-#  ecto_repos: [JoinmyParty.Repo]
+config :joinmy_party,
+  ecto_repos: [JoinmyParty.Repo]
 
 # Configures the endpoint
 config :joinmy_party, JoinmyPartyWeb.Endpoint,
