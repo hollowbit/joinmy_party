@@ -1,6 +1,8 @@
 defmodule PdilemmaGame do
   use GenServer, shutdown: 5_000
 
+  alias JoinmyParty.Timer, as: Timer
+
   def start_link(settings) do
     GenServer.start_link(__MODULE__, settings, name: {:global, "party:" <> settings.room_id})
   end
@@ -17,21 +19,24 @@ defmodule PdilemmaGame do
       tally: [],
       team_a_num_players: 0,
       team_b_num_players: 0,
-      round_timer: JoinmyParty.Timer.set_timer(round_time_sec, self())
+      round_timer: Timer.set_timer(round_time_sec, self())
     }
 
     {:ok, init_state}
   end
 
   @impl true
-  def handle_cast(:start_game, state = %{round_timer: %{started: false}}) do
+  def handle_cast(:start_game, state = %{started: false}) do
     broadcast_game_start(state.room_id, state.settings.round_time_sec)
     new_state = Map.merge(state, %{
       started: true,
-      round_timer: state.round_timer |> JoinmyParty.Timer.start_timer
+      round_timer: state.round_timer |> Timer.start_timer
     })
     {:noreply, new_state}
   end
+
+  @impl true
+  def handle_cast(:start_game, state = %{started: true}), do: {:noreply, state}
 
   @impl true
   def handle_cast({:team_toggle_selection, :team_a}, state) do
@@ -65,18 +70,6 @@ defmodule PdilemmaGame do
       broadcast_player_count_change(state.room_id, players_team + state.team_a_num_players)
       {:noreply, Map.put(state, :team_b_num_players, players_team)}
     end
-  end
-
-  @impl true
-  def terminate(reason, state) do
-    # if not a :normal exit, close all live sockets with a reason
-    case reason do
-      {:shutdown, message} -> broadcast_party_closed(state.room_id, message)
-      :shutdown -> broadcast_party_closed(state.room_id, "Unknown error")
-      _ -> :ok
-    end
-
-    {:shutdown, reason, state}
   end
 
   @impl true
@@ -114,6 +107,18 @@ defmodule PdilemmaGame do
 
     broadcast_player_count_change(state.room_id, total_players)
     {:reply, team_info, Map.put(state, :team_b_num_players, players + 1)}
+  end
+
+  @impl true
+  def terminate(reason, state) do
+    # if not a :normal exit, close all live sockets with a reason
+    case reason do
+      {:shutdown, message} -> broadcast_party_closed(state.room_id, message)
+      :shutdown -> broadcast_party_closed(state.room_id, "Unknown error")
+      _ -> :ok
+    end
+
+    {:shutdown, reason, state}
   end
 
   # game end
@@ -188,7 +193,7 @@ defmodule PdilemmaGame do
       round: state.round + 1,
       team_a_selection: :cooperate,
       team_b_selection: :cooperate,
-      round_timer: JoinmyParty.Timer.set_timer(state.settings.round_time_sec, self()) |> JoinmyParty.Timer.start_timer(),
+      round_timer: Timer.set_timer(state.settings.round_time_sec, self()) |> Timer.start_timer(),
       tally: tally
     })
     {:noreply, new_state}
@@ -199,13 +204,14 @@ defmodule PdilemmaGame do
   def handle_info({:update_time, timer}, state) do
     broadcast_round_timer(state.room_id, timer.time_left_sec)
 
-    new_state = Map.put(state, :round_timer, timer |> JoinmyParty.Timer.start_timer())
+    new_state = Map.put(state, :round_timer, timer |> Timer.start_timer())
     {:noreply, new_state}
   end
 
   # Helper Functions
 
-  def get_room_pid_or_start(room_id, settings) do
+  @spec get_or_create_party(String.t(), map()) :: pid()
+  def get_or_create_party(room_id, settings) do
     game_pid = case :global.whereis_name("party:" <> String.downcase(room_id)) do
       :undefined ->
         # use a supervisor to avoid having the admin liveview socket supervise and close the game prematurely

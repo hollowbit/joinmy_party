@@ -44,7 +44,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
       <header class="v-card">
         <h1 class="text-center text-xl">Round <%= @round %> of <%= @total_rounds %></h1>
 
-        <h3 class="text-center">Round ends in <span class={if @round_time < 10, do: "text-red-500"}><%= seconds_to_time(@round_time) %></span></h3>
+        <h3 class="text-center">Round ends in <span class={if @round_time < 10, do: "text-red-500", else: ""}><%= seconds_to_time(@round_time) %></span></h3>
       </header>
 
       <.live_component module={PdilemmaWeb.RoundEndModal} id="round-end-modal" />
@@ -139,7 +139,7 @@ defmodule JoinmyPartyWeb.PdilemmaWebLive do
 
   defp connected_mount(%{"room_id" => room_id}, _session, socket) do
     num_rounds = 6
-    game_pid = PdilemmaGame.get_room_pid_or_start(room_id, %{num_rounds: num_rounds, round_time_sec: 5 * 60})
+    game_pid = PdilemmaGame.get_or_create_party(room_id, %{num_rounds: num_rounds, round_time_sec: 5 * 60})
 
     game_info = PdilemmaGame.pick_team(game_pid)
     state = %{
