@@ -1,13 +1,6 @@
-defmodule JoinmyParty.Timer do
+defmodule JoinmyParty.TimerImpl do
+  @behaviour JoinmyParty.Timer
 
-  defstruct [
-    pid: nil,
-    timeout_ref: nil,
-    time_left_sec: 0,
-    started: false
-  ]
-
-  # creates a new timer state and schedules a timeout to call back in 1 second with a new time
   def set_timer(time, pid) do
     %JoinmyParty.Timer{pid: pid, time_left_sec: time}
   end
@@ -17,7 +10,7 @@ defmodule JoinmyParty.Timer do
     %{timer | timeout_ref: timeout_ref, started: true}
   end
 
-  def cancel_timer(timer = %{timeout_ref: ref}) do
+  def cancel_timer(timer = %JoinmyParty.Timer{timeout_ref: ref}) when not timer.started do
     Process.cancel_timer(ref)
     %{timer | timeout_ref: nil, started: false}
   end
