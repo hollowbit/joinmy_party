@@ -4,6 +4,8 @@ An interactive party platform where players connect from their smartphones to pl
 
 ## Architecture
 
+> Note: The current state of JoinMy.Party's code is definitely flawed in some obvious ways. Some tech debt was taken on to release the project in an initial MVP state. Before releasing new games, the plan is to fix some of the issues with refactoring work. Please see the [open issues](https://github.com/hollowbit/joinmy_party/issues).
+
 Each game room has the following architecture (using the game "Prisoner's Dilemma" in this example):
 
 ![Game Room Infrastructure](docs/joinmy-party-game-architecture.png)
